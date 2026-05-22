@@ -1,0 +1,1240 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Boole's Rule Calculator</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@300;400;500&family=DM+Sans:wght@300;400;500&display=swap"
+      rel="stylesheet"
+    />
+    <script>
+      window.MathJax = {
+        tex: {
+          inlineMath: [["\\(", "\\)"]],
+          displayMath: [["\\[", "\\]"]],
+        },
+        options: {
+          skipHtmlTags: ["script", "noscript", "style", "textarea", "pre"],
+        },
+      };
+    </script>
+    <script
+      src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"
+      async
+    ></script>
+    <style>
+      :root {
+        --bg: #0b0f1a;
+        --surface: #111827;
+        --surface-2: #1a2235;
+        --border: #1f2d45;
+        --border-light: #263549;
+        --accent: #4f8ef7;
+        --accent-glow: rgba(79, 142, 247, 0.15);
+        --accent-2: #38d9a9;
+        --text-primary: #e8edf5;
+        --text-secondary: #7a8fad;
+        --text-muted: #3d5068;
+        --error: #f87171;
+        --error-bg: rgba(248, 113, 113, 0.08);
+      }
+
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      html {
+        font-size: 16px;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      body {
+        background-color: var(--bg);
+        color: var(--text-primary);
+        font-family: "DM Sans", sans-serif;
+        font-weight: 300;
+        min-height: 100vh;
+        overflow-x: hidden;
+      }
+
+      body::before {
+        content: "";
+        position: fixed;
+        inset: 0;
+        background-image:
+          linear-gradient(rgba(79, 142, 247, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(79, 142, 247, 0.03) 1px, transparent 1px);
+        background-size: 48px 48px;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      body::after {
+        content: "";
+        position: fixed;
+        top: -200px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 800px;
+        height: 600px;
+        background: radial-gradient(
+          ellipse,
+          rgba(79, 142, 247, 0.07) 0%,
+          transparent 70%
+        );
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      .page-wrapper {
+        position: relative;
+        z-index: 1;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        padding: 60px 24px 80px;
+      }
+
+      /* ── Header ── */
+      .header {
+        text-align: center;
+        margin-bottom: 48px;
+        animation: fadeDown 0.6s ease both;
+      }
+
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent);
+        background: var(--accent-glow);
+        border: 1px solid rgba(79, 142, 247, 0.2);
+        padding: 5px 14px;
+        border-radius: 100px;
+        margin-bottom: 20px;
+      }
+
+      .header-badge::before {
+        content: "";
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--accent);
+        box-shadow: 0 0 8px var(--accent);
+        animation: pulse 2s ease infinite;
+      }
+
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.4;
+        }
+      }
+
+      h1 {
+        font-family: "DM Serif Display", serif;
+        font-size: clamp(2rem, 5vw, 3.2rem);
+        font-weight: 400;
+        line-height: 1.15;
+        letter-spacing: -0.02em;
+        margin-bottom: 12px;
+      }
+
+      h1 em {
+        font-style: italic;
+        color: var(--accent);
+      }
+
+      .header-sub {
+        font-size: 15px;
+        color: var(--text-secondary);
+        font-weight: 300;
+        max-width: 480px;
+        margin: 0 auto;
+        line-height: 1.6;
+      }
+
+      /* ── Shared card shell ── */
+      .card {
+        width: 100%;
+        max-width: 780px;
+        background: var(--surface);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        overflow: hidden;
+        box-shadow:
+          0 24px 80px rgba(0, 0, 0, 0.4),
+          0 0 0 1px rgba(255, 255, 255, 0.02);
+        margin-bottom: 24px;
+      }
+
+      .card:nth-of-type(1) {
+        animation: fadeUp 0.6s ease 0.05s both;
+      }
+      .card:nth-of-type(2) {
+        animation: fadeUp 0.6s ease 0.15s both;
+      }
+      .card:nth-of-type(3) {
+        animation: fadeUp 0.6s ease 0.25s both;
+      }
+      .card:nth-of-type(4) {
+        animation: fadeUp 0.6s ease 0.35s both;
+      }
+
+      .card-header {
+        padding: 18px 28px;
+        border-bottom: 1px solid var(--border);
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        background: var(--surface-2);
+      }
+
+      .card-header-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+      }
+      .card-header-dot:nth-child(1) {
+        background: #f87171;
+      }
+      .card-header-dot:nth-child(2) {
+        background: #fbbf24;
+      }
+      .card-header-dot:nth-child(3) {
+        background: #34d399;
+      }
+
+      .card-header-title {
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        color: var(--text-muted);
+        margin-left: 6px;
+        letter-spacing: 0.04em;
+      }
+
+      .card-body {
+        padding: 32px 36px;
+      }
+
+      /* ── Section headings inside cards ── */
+      .section-heading {
+        font-family: "DM Serif Display", serif;
+        font-size: 1.35rem;
+        font-weight: 400;
+        color: var(--text-primary);
+        margin-bottom: 14px;
+        letter-spacing: -0.01em;
+      }
+
+      .section-tag {
+        display: inline-block;
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: var(--accent-2);
+        background: rgba(56, 217, 169, 0.08);
+        border: 1px solid rgba(56, 217, 169, 0.18);
+        padding: 3px 10px;
+        border-radius: 100px;
+        margin-bottom: 14px;
+      }
+
+      /* ── Prose ── */
+      .prose {
+        font-size: 15px;
+        line-height: 1.75;
+        color: var(--text-secondary);
+        font-weight: 300;
+      }
+
+      .prose p {
+        margin-bottom: 14px;
+      }
+      .prose p:last-child {
+        margin-bottom: 0;
+      }
+
+      .prose strong {
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+
+      /* ── Formula block ── */
+      .formula-block {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-left: 3px solid var(--accent);
+        border-radius: 0 10px 10px 0;
+        padding: 18px 24px;
+        margin: 20px 0;
+        font-size: 15px;
+        color: var(--text-primary);
+        overflow-x: auto;
+      }
+
+      /* ── Info grid ── */
+      .info-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+        margin-top: 20px;
+      }
+
+      .info-tile {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 16px 20px;
+      }
+
+      .info-tile-label {
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--text-muted);
+        margin-bottom: 8px;
+      }
+
+      .info-tile-value {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+
+      /* ── Worked example steps ── */
+      .steps {
+        list-style: none;
+        counter-reset: step;
+        margin-top: 6px;
+      }
+
+      .steps li {
+        counter-increment: step;
+        display: grid;
+        grid-template-columns: 36px 1fr;
+        gap: 14px;
+        align-items: start;
+        padding: 16px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .steps li:last-child {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      .steps li::before {
+        content: counter(step);
+        width: 28px;
+        height: 28px;
+        border-radius: 50%;
+        background: var(--accent-glow);
+        border: 1px solid rgba(79, 142, 247, 0.25);
+        color: var(--accent);
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        font-weight: 500;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        flex-shrink: 0;
+        margin-top: 2px;
+      }
+
+      .step-content {
+        font-size: 14px;
+        color: var(--text-secondary);
+        line-height: 1.7;
+      }
+      .step-content strong {
+        color: var(--text-primary);
+        font-weight: 500;
+      }
+
+      .step-formula {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 12px 16px;
+        margin-top: 10px;
+        font-size: 14px;
+        overflow-x: auto;
+      }
+
+      .step-answer {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(56, 217, 169, 0.08);
+        border: 1px solid rgba(56, 217, 169, 0.2);
+        border-radius: 8px;
+        padding: 10px 16px;
+        margin-top: 10px;
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        color: var(--accent-2);
+      }
+
+      /* ── Calculator form ── */
+      .form-group {
+        margin-bottom: 18px;
+      }
+
+      .form-label {
+        display: block;
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        margin-bottom: 8px;
+      }
+
+      .form-label span {
+        color: var(--accent);
+        margin-left: 4px;
+      }
+
+      .input-wrapper {
+        position: relative;
+      }
+
+      .input-prefix {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        color: var(--text-muted);
+        pointer-events: none;
+        user-select: none;
+      }
+
+      input {
+        width: 100%;
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 13px 16px 13px 36px;
+        font-family: "DM Mono", monospace;
+        font-size: 14px;
+        color: var(--text-primary);
+        outline: none;
+        transition:
+          border-color 0.2s,
+          box-shadow 0.2s,
+          background 0.2s;
+        -webkit-appearance: none;
+      }
+
+      input::placeholder {
+        color: var(--text-muted);
+        font-weight: 300;
+      }
+
+      input:focus {
+        border-color: var(--accent);
+        background: rgba(79, 142, 247, 0.04);
+        box-shadow: 0 0 0 3px rgba(79, 142, 247, 0.1);
+      }
+
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+
+      .form-divider {
+        height: 1px;
+        background: var(--border);
+        margin: 24px 0;
+        position: relative;
+      }
+
+      .form-divider::after {
+        content: "PARAMETERS";
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--surface);
+        padding: 0 12px;
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        letter-spacing: 0.15em;
+        color: var(--text-muted);
+      }
+
+      .btn {
+        width: 100%;
+        padding: 15px 24px;
+        background: var(--accent);
+        color: #fff;
+        font-family: "DM Sans", sans-serif;
+        font-size: 15px;
+        font-weight: 500;
+        border: none;
+        border-radius: 10px;
+        cursor: pointer;
+        transition:
+          background 0.2s,
+          transform 0.15s,
+          box-shadow 0.2s;
+        margin-top: 8px;
+        box-shadow: 0 4px 20px rgba(79, 142, 247, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .btn:hover {
+        background: #6fa3f9;
+        box-shadow: 0 6px 28px rgba(79, 142, 247, 0.45);
+        transform: translateY(-1px);
+      }
+
+      .btn:active {
+        transform: translateY(0);
+      }
+      .btn-icon {
+        width: 16px;
+        height: 16px;
+        opacity: 0.9;
+      }
+
+      /* ── Error ── */
+      .error-box {
+        margin: 0 28px 24px;
+        background: var(--error-bg);
+        border: 1px solid rgba(248, 113, 113, 0.2);
+        border-radius: 10px;
+        padding: 14px 18px;
+        display: flex;
+        align-items: flex-start;
+        gap: 10px;
+        animation: fadeUp 0.3s ease both;
+      }
+
+      .error-icon {
+        color: var(--error);
+        font-size: 15px;
+        margin-top: 1px;
+        flex-shrink: 0;
+      }
+
+      .error-box p {
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        color: var(--error);
+        line-height: 1.5;
+      }
+
+      /* ── Result section ── */
+      .result-section {
+        border-top: 1px solid var(--border);
+        padding: 28px;
+        animation: fadeUp 0.4s ease both;
+      }
+
+      .result-value-box {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 20px 24px;
+        margin-bottom: 24px;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .result-value-box::before {
+        content: "";
+        position: absolute;
+        left: 0;
+        top: 0;
+        bottom: 0;
+        width: 3px;
+        background: linear-gradient(to bottom, var(--accent), var(--accent-2));
+        border-radius: 3px 0 0 3px;
+      }
+
+      .mini-label {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: var(--accent-2);
+        margin-bottom: 8px;
+        display: block;
+      }
+
+      .result-value {
+        font-family: "DM Serif Display", serif;
+        font-size: clamp(1.6rem, 4vw, 2.4rem);
+        color: var(--text-primary);
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+      }
+
+      /* ── Plot ── */
+      .plot-box {
+        background: var(--bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        margin-bottom: 24px;
+      }
+
+      .plot-header {
+        padding: 12px 18px;
+        border-bottom: 1px solid var(--border);
+        background: var(--surface-2);
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .plot-header-left {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .plot-dot {
+        width: 7px;
+        height: 7px;
+        border-radius: 50%;
+      }
+      .plot-dot.blue {
+        background: var(--accent);
+        box-shadow: 0 0 6px var(--accent);
+      }
+      .plot-dot.green {
+        background: var(--accent-2);
+        box-shadow: 0 0 6px var(--accent-2);
+      }
+
+      .plot-header span {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        color: var(--text-muted);
+        letter-spacing: 0.06em;
+      }
+
+      .plot-legend {
+        display: flex;
+        align-items: center;
+        gap: 14px;
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-family: "DM Mono", monospace;
+        font-size: 10px;
+        color: var(--text-secondary);
+        letter-spacing: 0.05em;
+      }
+
+      .legend-line {
+        width: 14px;
+        height: 2px;
+        border-radius: 2px;
+      }
+      .legend-line.blue {
+        background: var(--accent);
+      }
+
+      .legend-dot-marker {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--accent-2);
+        border: 1.5px solid var(--bg);
+      }
+
+      .plot-img-wrapper {
+        line-height: 0;
+      }
+      .plot-img-wrapper img {
+        width: 100%;
+        height: auto;
+        display: block;
+      }
+
+      /* ── Table ── */
+      .table-wrapper {
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      thead tr {
+        background: var(--surface-2);
+      }
+
+      th {
+        font-family: "DM Mono", monospace;
+        font-size: 11px;
+        font-weight: 500;
+        letter-spacing: 0.1em;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+        padding: 12px 20px;
+        text-align: left;
+        border-bottom: 1px solid var(--border);
+      }
+
+      td {
+        font-family: "DM Mono", monospace;
+        font-size: 13px;
+        color: var(--text-primary);
+        padding: 12px 20px;
+        border-bottom: 1px solid var(--border);
+        font-weight: 300;
+      }
+
+      tr:last-child td {
+        border-bottom: none;
+      }
+      tbody tr {
+        transition: background 0.15s;
+      }
+      tbody tr:hover {
+        background: var(--surface-2);
+      }
+      tbody tr:nth-child(odd) {
+        background: rgba(255, 255, 255, 0.01);
+      }
+      tbody tr:nth-child(odd):hover {
+        background: var(--surface-2);
+      }
+      td:first-child {
+        color: var(--text-muted);
+      }
+      td:nth-child(2) {
+        color: var(--accent);
+      }
+
+      /* ── Footer ── */
+      .footer {
+        margin-top: 40px;
+        text-align: center;
+        font-family: "DM Mono", monospace;
+        font-size: 12px;
+        color: var(--text-muted);
+        animation: fadeUp 0.6s ease 0.4s both;
+      }
+
+      @keyframes fadeDown {
+        from {
+          opacity: 0;
+          transform: translateY(-16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      @keyframes fadeUp {
+        from {
+          opacity: 0;
+          transform: translateY(16px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+
+      @media (max-width: 600px) {
+        .card-body {
+          padding: 24px 20px;
+        }
+        .form-row {
+          grid-template-columns: 1fr;
+        }
+        .info-grid {
+          grid-template-columns: 1fr;
+        }
+        .result-section {
+          padding: 24px 20px;
+        }
+        .error-box {
+          margin: 0 20px 20px;
+        }
+        th,
+        td {
+          padding: 10px 14px;
+        }
+        .plot-legend {
+          display: none;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <!-- ═══════════════════════════════════════
+         HEADER
+    ════════════════════════════════════════ -->
+      <header class="header">
+        <div class="header-badge">Numerical Integration</div>
+        <h1>Boole's <em>Rule</em> Calculator</h1>
+        <p class="header-sub">
+          A closed Newton–Cotes formula that approximates a definite integral
+          using five equally spaced points with fourth-order accuracy.
+        </p>
+      </header>
+
+      <!-- ═══════════════════════════════════════
+         CARD 1 — MATHEMATICAL DISCUSSION
+    ════════════════════════════════════════ -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-dot"></div>
+          <div class="card-header-dot"></div>
+          <div class="card-header-dot"></div>
+          <span class="card-header-title">discussion.md</span>
+        </div>
+        <div class="card-body">
+          <div class="section-tag">Mathematical Discussion</div>
+          <h2 class="section-heading">What is Boole's Rule?</h2>
+
+          <div class="prose">
+            <p>
+              <strong>Boole's Rule</strong> (also called Bode's Rule) is a
+              numerical integration technique belonging to the family of closed
+              Newton–Cotes formulas. It approximates the definite integral of a
+              function \( f(x) \) over an interval \([a,\, b]\) by fitting a
+              fourth-degree polynomial through five equally spaced sample points
+              and integrating that polynomial exactly.
+            </p>
+            <p>
+              Given an interval \([a, b]\), the rule divides it into four equal
+              subintervals of width \( h = \tfrac{b-a}{4} \), producing five
+              nodes:
+            </p>
+          </div>
+
+          <div class="formula-block">
+            \[ x_0 = a,\quad x_1 = a+h,\quad x_2 = a+2h,\quad x_3 = a+3h,\quad
+            x_4 = b \]
+          </div>
+
+          <div class="prose">
+            <p>The integral is then approximated by the weighted sum:</p>
+          </div>
+
+          <div class="formula-block">
+            \[ \int_a^b f(x)\,dx \;\approx\; \frac{2h}{45} \Bigl(7f(x_0) +
+            32f(x_1) + 12f(x_2) + 32f(x_3) + 7f(x_4)\Bigr) \]
+          </div>
+
+          <div class="prose">
+            <p>
+              The coefficients <strong>7, 32, 12, 32, 7</strong> arise from
+              integrating the Lagrange interpolating polynomial through the five
+              nodes. Note the symmetry of the weights — the outer nodes carry a
+              factor of 7, the inner edge nodes 32, and the midpoint 12.
+            </p>
+            <p>
+              Boole's Rule is
+              <strong>exact for polynomials of degree ≤ 5</strong>, even though
+              it is derived from a degree-4 polynomial fit. The truncation error
+              over a single application is:
+            </p>
+          </div>
+
+          <div class="formula-block">
+            \[ E = -\frac{8}{945}h^7 f^{(6)}(\xi), \quad \xi \in (a,\, b) \]
+          </div>
+
+          <div class="prose">
+            <p>
+              This sixth-derivative dependence means the rule converges rapidly
+              for smooth functions but may lose accuracy when \( f \) has large
+              higher-order derivatives.
+            </p>
+          </div>
+
+          <div class="info-grid">
+            <div class="info-tile">
+              <div class="info-tile-label">Order of Accuracy</div>
+              <div class="info-tile-value">
+                Exact for polynomials of degree \(\leq 5\)
+              </div>
+            </div>
+            <div class="info-tile">
+              <div class="info-tile-label">Number of Nodes</div>
+              <div class="info-tile-value">
+                5 equally spaced points \((n = 4)\)
+              </div>
+            </div>
+            <div class="info-tile">
+              <div class="info-tile-label">Weights</div>
+              <div class="info-tile-value">
+                \(\tfrac{2h}{45}(7,\,32,\,12,\,32,\,7)\)
+              </div>
+            </div>
+            <div class="info-tile">
+              <div class="info-tile-label">Truncation Error</div>
+              <div class="info-tile-value">\(O(h^7 f^{(6)})\)</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+         CARD 2 — WORKED EXAMPLE 1
+    ════════════════════════════════════════ -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-dot"></div>
+          <div class="card-header-dot"></div>
+          <div class="card-header-dot"></div>
+          <span class="card-header-title">example_01.py</span>
+        </div>
+        <div class="card-body">
+          <div class="section-tag">Worked Example 1</div>
+          <h2 class="section-heading">
+            Integrate \( f(x) = x^4 \) over \([0,\,2]\)
+          </h2>
+
+          <div class="prose">
+            <p>
+              The exact value is \(\displaystyle\int_0^2 x^4\,dx =
+              \left[\tfrac{x^5}{5}\right]_0^2 = \tfrac{32}{5} = 6.4\). Since
+              \(f(x)=x^4\) is a degree-4 polynomial, Boole's Rule should be
+              <strong>exact</strong>.
+            </p>
+          </div>
+
+          <ol class="steps">
+            <li>
+              <div class="step-content">
+                <strong>Compute the step size \(h\).</strong>
+                <div class="step-formula">
+                  \[ h = \frac{b - a}{4} = \frac{2 - 0}{4} = 0.5 \]
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <div class="step-content">
+                <strong>Find the five nodes.</strong>
+                <div class="step-formula">
+                  \[ x_0 = 0,\quad x_1 = 0.5,\quad x_2 = 1.0,\quad x_3 =
+                  1.5,\quad x_4 = 2.0 \]
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <div class="step-content">
+                <strong>Evaluate \(f(x) = x^4\) at each node.</strong>
+                <div class="step-formula">
+                  \[ f(x_0)=0,\quad f(x_1)=0.0625,\quad f(x_2)=1,\quad
+                  f(x_3)=5.0625,\quad f(x_4)=16 \]
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <div class="step-content">
+                <strong>Apply the weighted sum.</strong>
+                <div class="step-formula">
+                  \[ S = 7(0) + 32(0.0625) + 12(1) + 32(5.0625) + 7(16) = 0 + 2
+                  + 12 + 162 + 112 = 288 \]
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <div class="step-content">
+                <strong
+                  >Multiply by the leading factor \(\tfrac{2h}{45}\).</strong
+                >
+                <div class="step-formula">
+                  \[ \int_0^2 x^4\,dx \;\approx\; \frac{2(0.5)}{45} \times 288 =
+                  \frac{1}{45} \times 288 = 6.4 \]
+                </div>
+                <div class="step-answer">
+                  ✓ Result: 6.4000 &nbsp;|&nbsp; Exact value: 6.4 &nbsp;|&nbsp;
+                  Error: 0.0000
+                </div>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+         CARD 3 — WORKED EXAMPLE 2
+    ════════════════════════════════════════ -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-dot"></div>
+          <div class="card-header-dot"></div>
+          <div class="card-header-dot"></div>
+          <span class="card-header-title">example_02.py</span>
+        </div>
+        <div class="card-body">
+          <div class="section-tag">Worked Example 2</div>
+          <h2 class="section-heading">
+            Integrate \( f(x) = \sin(x) \) over \([0,\,\pi]\)
+          </h2>
+
+          <div class="prose">
+            <p>
+              The exact value is \(\displaystyle\int_0^{\pi}\sin(x)\,dx = [-\cos
+              x]_0^{\pi} = 2\). Since \(\sin(x)\) is not a polynomial, there
+              will be a small truncation error.
+            </p>
+          </div>
+
+          <ol class="steps">
+            <li>
+              <div class="step-content">
+                <strong>Compute the step size \(h\).</strong>
+                <div class="step-formula">
+                  \[ h = \frac{\pi - 0}{4} = \frac{\pi}{4} \approx 0.7854 \]
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <div class="step-content">
+                <strong>Find the five nodes.</strong>
+                <div class="step-formula">
+                  \[ x_0 = 0,\quad x_1 = \tfrac{\pi}{4},\quad x_2 =
+                  \tfrac{\pi}{2},\quad x_3 = \tfrac{3\pi}{4},\quad x_4 = \pi \]
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <div class="step-content">
+                <strong>Evaluate \(\sin(x)\) at each node.</strong>
+                <div class="step-formula">
+                  \[ f(x_0)=0,\quad
+                  f(x_1)=\tfrac{\sqrt{2}}{2}\approx0.7071,\quad f(x_2)=1,\quad
+                  f(x_3)\approx0.7071,\quad f(x_4)=0 \]
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <div class="step-content">
+                <strong>Apply the weighted sum.</strong>
+                <div class="step-formula">
+                  \[ S = 7(0) + 32(0.7071) + 12(1) + 32(0.7071) + 7(0) = 0 +
+                  22.627 + 12 + 22.627 + 0 = 57.254 \]
+                </div>
+              </div>
+            </li>
+
+            <li>
+              <div class="step-content">
+                <strong>Multiply by \(\tfrac{2h}{45}\).</strong>
+                <div class="step-formula">
+                  \[ \int_0^{\pi}\sin(x)\,dx \;\approx\; \frac{2 \times
+                  0.7854}{45} \times 57.254 = 0.03491 \times 57.254 \approx
+                  1.9998 \]
+                </div>
+                <div class="step-answer">
+                  ✓ Result: 1.9998 &nbsp;|&nbsp; Exact value: 2.0000
+                  &nbsp;|&nbsp; Error: 0.0002
+                </div>
+              </div>
+            </li>
+          </ol>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════
+         CARD 4 — INTERACTIVE CALCULATOR
+    ════════════════════════════════════════ -->
+      <div class="card">
+        <div class="card-header">
+          <div class="card-header-dot"></div>
+          <div class="card-header-dot"></div>
+          <div class="card-header-dot"></div>
+          <span class="card-header-title">calculator.py</span>
+        </div>
+
+        <div class="card-body">
+          <div class="section-tag">Interactive Calculator</div>
+          <h2 class="section-heading">Compute Your Integral</h2>
+
+          <form method="POST" action="/">
+            <div class="form-group">
+              <label class="form-label" for="function">
+                f(x) <span>— function expression</span>
+              </label>
+              <div class="input-wrapper">
+                <span class="input-prefix">ƒ</span>
+                <input
+                  id="function"
+                  name="function"
+                  placeholder="x**2  or  math.sin(x)  or  math.exp(x)"
+                  required
+                  autocomplete="off"
+                  spellcheck="false"
+                />
+              </div>
+            </div>
+
+            <div class="form-divider"></div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label class="form-label" for="a"
+                  >Lower limit <span>a</span></label
+                >
+                <div class="input-wrapper">
+                  <span class="input-prefix">a</span>
+                  <input
+                    id="a"
+                    name="a"
+                    placeholder="0"
+                    required
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="form-label" for="b"
+                  >Upper limit <span>b</span></label
+                >
+                <div class="input-wrapper">
+                  <span class="input-prefix">b</span>
+                  <input
+                    id="b"
+                    name="b"
+                    placeholder="1"
+                    required
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <button class="btn" type="submit">
+              <svg
+                class="btn-icon"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
+                <path d="M12 2v20M2 12h20" />
+              </svg>
+              Compute Integral
+            </button>
+          </form>
+        </div>
+
+        {% if error %}
+        <div class="error-box">
+          <span class="error-icon">✕</span>
+          <p>{{ error }}</p>
+        </div>
+        {% endif %} {% if result is not none %}
+        <div class="result-section">
+          <div class="result-value-box">
+            <span class="mini-label">Approximate Integral</span>
+            <div class="result-value">{{ "%.4f" | format(result) }}</div>
+          </div>
+
+          {% if plot_img %}
+          <span class="mini-label" style="margin-bottom: 12px">Graph</span>
+          <div class="plot-box">
+            <div class="plot-header">
+              <div class="plot-header-left">
+                <div class="plot-dot blue"></div>
+                <div class="plot-dot green"></div>
+                <span>f(x) over [a, b]</span>
+              </div>
+              <div class="plot-legend">
+                <div class="legend-item">
+                  <div class="legend-line blue"></div>
+                  <span>f(x)</span>
+                </div>
+                <div class="legend-item">
+                  <div class="legend-dot-marker"></div>
+                  <span>Nodes</span>
+                </div>
+              </div>
+            </div>
+            <div class="plot-img-wrapper">
+              <img
+                src="data:image/png;base64,{{ plot_img }}"
+                alt="Boole's Rule Graph"
+              />
+            </div>
+          </div>
+          {% endif %}
+
+          <span class="mini-label" style="margin-bottom: 12px"
+            >Evaluation Points</span
+          >
+          <div class="table-wrapper">
+            <table>
+              <thead>
+                <tr>
+                  <th>Node</th>
+                  <th>x</th>
+                  <th>f(x)</th>
+                </tr>
+              </thead>
+              <tbody>
+                {% for row in table %}
+                <tr>
+                  <td>x<sub>{{ loop.index0 }}</sub></td>
+                  <td>{{ "%.4f" | format(row[0]) }}</td>
+                  <td>{{ "%.4f" | format(row[1]) }}</td>
+                </tr>
+                {% endfor %}
+              </tbody>
+            </table>
+          </div>
+        </div>
+        {% endif %}
+      </div>
+      <!-- /card 4 -->
+
+      <footer class="footer">
+        Boole's Rule &nbsp;·&nbsp; n = 4 &nbsp;·&nbsp; \(\tfrac{2h}{45}(7y_0 +
+        32y_1 + 12y_2 + 32y_3 + 7y_4)\)
+      </footer>
+    </div>
+  </body>
+</html>
